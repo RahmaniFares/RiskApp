@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SectorShield | Activity Risk Management</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6D28D9',
+                        low: '#10B981',
+                        medium: '#F59E0B',
+                        high: '#EF4444',
+                        veryhigh: '#7C3AED'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .risk-badge {
+            @apply px-3 py-1 rounded-full text-xs font-medium text-white;
+        }
+        
+        .sector-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.1);
+        }
+        
+        .glass-modal {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Main Container -->
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i data-feather="shield" class="text-primary mr-2"></i>
+                        Sector of Activity Management
+                    </h1>
+                    <p class="text-gray-500 mt-1">Manage the risk levels associated with different industries and business sectors.</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button class="flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i data-feather="refresh-cw" class="w-4 h-4 mr-2"></i>
+                        Refresh Data
+                    </button>
+                    <button onclick="openUploadModal()" class="flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i data-feather="upload" class="w-4 h-4 mr-2"></i>
+                        Upload Excel File
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Total Sectors -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-primary-100 rounded-md p-3">
+                                <i data-feather="layers" class="text-primary h-6 w-6"></i>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Total Sectors</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">247</div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Low Risk -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                                <i data-feather="check-circle" class="text-low h-6 w-6"></i>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Low Risk</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">148</div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- High Risk -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-orange-100 rounded-md p-3">
+                                <i data-feather="alert-triangle" class="text-high h-6 w-6"></i>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">High Risk</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">32</div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Updated Today -->
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                                <i data-feather="clock" class="text-primary h-6 w-6"></i>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Updated Today</dt>
+                                    <dd class="flex items-baseline">
+                                        <div class="text-2xl font-semibold text-gray-900">18</div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            <div class="bg-white shadow rounded-lg p-4 sm:p-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="flex-1">
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-feather="search" class="h-4 w-4 text-gray-400"></i>
+                            </div>
+                            <input type="text" name="search" id="search" class="focus:ring-primary focus:border-primary block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2" placeholder="Search sector...">
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                        <select id="risk-filter" class="focus:ring-primary focus:border-primary block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md sm:text-sm">
+                            <option selected>All Risk Levels</option>
+                            <option>Low</option>
+                            <option>Medium</option>
+                            <option>High</option>
+                            <option>Very High</option>
+                        </select>
+                        
+                        <select id="domain-filter" class="focus:ring-primary focus:border-primary block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md sm:text-sm">
+                            <option selected>All Domains</option>
+                            <option>Financial</option>
+                            <option>Industrial</option>
+                            <option>Technology</option>
+                            <option>Healthcare</option>
+                            <option>Energy</option>
+                            <option>Consumer</option>
+                        </select>
+                        
+                        <button onclick="filterSectors()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Table -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-1">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Domain</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Update</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <!-- Sample Row 1 -->
+                            <tr class="sector-card transition-all hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <img class="h-10 w-10 rounded-full" src="http://static.photos/finance/200x200/1" alt="">
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Commercial Banking</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">CB-1024</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">Financial</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="risk-badge bg-low">Low Risk</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2023-05-15</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="openEditModal()" class="text-primary hover:text-primary-700 mr-3">
+                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="openSectorDetails()" class="text-gray-600 hover:text-gray-900">
+                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Sample Row 2 -->
+                            <tr class="sector-card transition-all hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <img class="h-10 w-10 rounded-full" src="http://static.photos/technology/200x200/2" alt="">
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Cryptocurrency</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">CRYP-2048</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">Technology</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="risk-badge bg-high">High Risk</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2023-06-22</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="openEditModal()" class="text-primary hover:text-primary-700 mr-3">
+                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="openSectorDetails()" class="text-gray-600 hover:text-gray-900">
+                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Sample Row 3 -->
+                            <tr class="sector-card transition-all hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <img class="h-10 w-10 rounded-full" src="http://static.photos/healthcare/200x200/3" alt="">
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Pharmaceuticals</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">PHARM-4096</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">Healthcare</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="risk-badge bg-medium">Medium Risk</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2023-04-10</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="openEditModal()" class="text-primary hover:text-primary-700 mr-3">
+                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="openSectorDetails()" class="text-gray-600 hover:text-gray-900">
+                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Sample Row 4 -->
+                            <tr class="sector-card transition-all hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <img class="h-10 w-10 rounded-full" src="http://static.photos/energy/200x200/4" alt="">
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Oil & Gas Exploration</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">OIL-8192</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">Energy</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="risk-badge bg-veryhigh">Very High Risk</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">2023-07-05</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button onclick="openEditModal()" class="text-primary hover:text-primary-700 mr-3">
+                                        <i data-feather="edit-2" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="openSectorDetails()" class="text-gray-600 hover:text-gray-900">
+                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-gray-700">
+                                Showing <span class="font-medium">1</span> to <span class="font-medium">4</span> of <span class="font-medium">247</span> results
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Previous</span>
+                                    <i data-feather="chevron-left" class="h-5 w-5"></i>
+                                </a>
+                                <a href="#" aria-current="page" class="z-10 bg-primary border-primary text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    1
+                                </a>
+                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    2
+                                </a>
+                                <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    3
+                                </a>
+                                <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Next</span>
+                                    <i data-feather="chevron-right" class="h-5 w-5"></i>
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-12">
+            <div class="max-w-7xl mx-auto py-6 px-4 overflow-hidden sm:px-6 lg:px-8">
+                <p class="text-center text-base text-gray-500">
+                    &copy; 2023 SectorShield. All rights reserved.
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Edit Sector Modal -->
+    <div id="editModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="glass-modal px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Edit Sector Details</h3>
+                            <div class="mt-2">
+                                <form class="space-y-4">
+                                    <div>
+                                        <label for="sector-name" class="block text-sm font-medium text-gray-700">Sector Name</label>
+                                        <input type="text" name="sector-name" id="sector-name" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" value="Commercial Banking">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="sector-code" class="block text-sm font-medium text-gray-700">Sector Code</label>
+                                        <input type="text" name="sector-code" id="sector-code" class="mt-1 focus:ring-primary focus:border-primary block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" value="CB-1024">
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="sector-domain" class="block text-sm font-medium text-gray-700">Business Domain</label>
+                                        <select id="sector-domain" name="sector-domain" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                                            <option>Financial</option>
+                                            <option selected>Technology</option>
+                                            <option>Healthcare</option>
+                                            <option>Energy</option>
+                                            <option>Industrial</option>
+                                            <option>Consumer</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label for="risk-level" class="block text-sm font-medium text-gray-700">Risk Level</label>
+                                        <select id="risk-level" name="risk-level" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md">
+                                            <option>Low</option>
+                                            <option selected>Medium</option>
+                                            <option>High</option>
+                                            <option>Very High</option>
+                                        </select>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Save Changes
+                    </button>
+                    <button onclick="closeModal('editModal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Excel Upload Modal -->
+    <div id="uploadModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="glass-modal px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Upload Excel File</h3>
+                            <div class="mt-2">
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                    <div class="space-y-1 text-center">
+                                        <i data-feather="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i>
+                                        <div class="flex text-sm text-gray-600">
+                                            <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                                                <span>Upload a file</span>
+                                                <input id="file-upload" name="file-upload" type="file" class="sr-only">
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500">
+                                            Excel files up to 10MB
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div id="progress-container" class="mt-4 hidden">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-700">Uploading...</span>
+                                        <span class="text-sm font-medium text-gray-700">75%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div class="bg-primary h-2.5 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div id="success-message" class="mt-4 p-4 bg-green-50 rounded-md hidden">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <i data-feather="check-circle" class="h-5 w-5 text-green-400"></i>
+                                        </div>
+                                        <div class="ml-3">
+                                            <p class="text-sm font-medium text-green-800">
+                                                File uploaded successfully! The data will be processed shortly.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button onclick="uploadExcelFile()" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Upload
+                    </button>
+                    <button onclick="closeModal('uploadModal')" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sector Details Sidebar -->
+    <div id="detailsSidebar" class="fixed inset-y-0 right-0 max-w-xl w-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out translate-x-full z-20">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Sector Details</h3>
+                <button onclick="closeSidebar()" class="text-gray-400 hover:text-gray-500">
+                    <i data-feather="x" class="h-6 w-6"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 h-16 w-16 rounded-md bg-gray-100 flex items-center justify-center">
+                        <i data-feather="briefcase" class="h-8 w-8 text-primary"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-xl font-bold text-gray-900">Commercial Banking</h4>
+                        <span class="risk-badge bg-low mt-1">Low Risk</span>
+                    </div>
+                </div>
+                
+                <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Sector Code</h5>
+                        <p class="mt-1 text-sm text-gray-900">CB-1024</p>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Business Domain</h5>
+                        <p class="mt-1 text-sm text-gray-900">Financial</p>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</h5>
+                        <p class="mt-1 text-sm text-gray-900">2023-05-15 by <span class="font-medium">John Smith</span></p>
+                    </div>
+                    
+                    <div>
+                        <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Created On</h5>
+                        <p class="mt-1 text-sm text-gray-900">2021-03-22</p>
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider">Description</h5>
+                    <p class="mt-1 text-sm text-gray-900">Traditional commercial banking activities including deposit-taking, lending, and payment services. This sector is well-regulated with established risk management frameworks.</p>
+                </div>
+                
+                <div class="mt-6">
+                    <h5 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Risk Trend (Last 12 Months)</h5>
+                    <div class="bg-gray-50 p-4 rounded-md">
+                        <canvas id="riskChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+                <button onclick="closeSidebar()" type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay for sidebar -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-gray-500 bg-opacity-75 z-10 hidden"></div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 hidden">
+        <div class="bg-green-50 border border-green-200 rounded-md shadow-lg overflow-hidden">
+            <div class="p-4">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i data-feather="check-circle" class="h-5 w-5 text-green-400"></i>
+                    </div>
+                    <div class="ml-3 w-0 flex-1 pt-0.5">
+                        <p class="text-sm font-medium text-green-800">Changes saved successfully!</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0 flex">
+                        <button onclick="hideToast()" class="bg-green-50 rounded-md inline-flex text-green-400 hover:text-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <span class="sr-only">Close</span>
+                            <i data-feather="x" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize feather icons
+        feather.replace();
+        
+        // Initialize chart when sidebar opens
+        function initChart() {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Risk Score',
+                        data: [2.1, 2.3, 2.0, 1.9, 1.8, 1.7, 1.8, 1.9, 2.0, 2.1, 2.0, 1.9],
+                        backgroundColor: 'rgba(109, 40, 217, 0.1)',
+                        borderColor: '#6D28D9',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 1,
+                            max: 5
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Modal functions
+        function openEditModal() {
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+        
+        // Sidebar functions
+        function openSectorDetails() {
+            document.getElementById('detailsSidebar').classList.remove('translate-x-full');
+            document.getElementById('sidebarOverlay').classList.remove('hidden');
+            initChart();
+        }
+        
+        function closeSidebar() {
+            document.getElementById('detailsSidebar').classList.add('translate-x-full');
+            document.getElementById('sidebarOverlay').classList.add('hidden');
+        }
+        
+        // Upload simulation
+        function uploadExcelFile() {
+            document.getElementById('progress-container').classList.remove('hidden');
+            
+            // Simulate upload
+            setTimeout(() => {
+                document.getElementById('progress-container').classList.add('hidden');
+                document.getElementById('success-message').classList.remove('hidden');
+                
+                // Auto-close after 2 seconds
+                setTimeout(() => {
+                    closeModal('uploadModal');
+                    showToast();
+                }, 2000);
+            }, 1500);
+        }
+        
+        // Toast notification
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('hidden');
+            setTimeout(hideToast, 3000);
+        }
+        
+        function hideToast() {
+            document.getElementById('toast').classList.add('hidden');
+        }
+        
+        // Filter function (placeholder)
+        function filterSectors() {
+            // This would filter the table in a real implementation
+            console.log('Filtering sectors...');
+        }
+    </script>
+</body>
+</html>
