@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiskRadar - Country Risk Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom, #f5f3ff, #ffffff);
+        }
+        .risk-low { background-color: #10b981; }
+        .risk-medium { background-color: #f59e0b; }
+        .risk-high { background-color: #f97316; }
+        .risk-veryhigh { background-color: #ef4444; }
+        .sidebar-enter-active, .sidebar-leave-active {
+            transition: all 0.3s ease;
+        }
+        .sidebar-enter-from, .sidebar-leave-to {
+            transform: translateX(100%);
+        }
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.2s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6D28D9',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen">
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <i data-feather="globe" class="mr-2"></i> Country Risk Management
+                </h1>
+                <p class="text-gray-600 mt-1">Manage and update the risk levels of countries across your system.</p>
+            </div>
+            <div class="flex space-x-3 mt-4 md:mt-0">
+                <button id="refreshBtn" class="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                    <i data-feather="refresh-cw" class="w-5 h-5 mr-2"></i> Refresh Data
+                </button>
+                <button id="uploadBtn" class="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all">
+                    <i data-feather="upload" class="w-5 h-5 mr-2"></i> Upload Excel File
+                </button>
+            </div>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="relative">
+                    <i data-feather="search" class="absolute left-3 top-3 text-gray-400"></i>
+                    <input type="text" id="searchInput" placeholder="Search countries..." class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                </div>
+                <select id="riskFilter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                    <option value="">All Risk Levels</option>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                    <option value="Very High">Very High</option>
+                </select>
+                <select id="regionFilter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                    <option value="">All Regions</option>
+                    <option value="Africa">Africa</option>
+                    <option value="Americas">Americas</option>
+                    <option value="Asia">Asia</option>
+                    <option value="Europe">Europe</option>
+                    <option value="Oceania">Oceania</option>
+                </select>
+                <select id="sortFilter" class="border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                    <option value="name">Sort by: A-Z</option>
+                    <option value="risk">Sort by: Risk Level</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Country Table -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Update</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="countryTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex justify-between items-center mt-4 px-2">
+            <div class="text-sm text-gray-600">
+                Showing <span id="shownCount">1</span> to <span id="totalCount">10</span> of <span id="totalCountries">50</span> countries
+            </div>
+            <div class="flex space-x-1">
+                <button class="px-3 py-1 border rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50" id="prevPage" disabled>Prev</button>
+                <button class="px-3 py-1 border rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50" id="nextPage">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Excel Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">Upload Risk Data</h3>
+                    <button id="closeUploadModal" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4 hover:border-primary transition-all" id="dropZone">
+                    <i data-feather="upload-cloud" class="w-12 h-12 mx-auto text-gray-400 mb-3"></i>
+                    <p class="text-gray-600 mb-2">Drag & drop your Excel file here</p>
+                    <p class="text-gray-400 text-sm mb-4">or</p>
+                    <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls">
+                    <button id="selectFileBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all">
+                        Select Excel File
+                    </button>
+                </div>
+                <div id="fileNameDisplay" class="text-sm text-gray-600 mb-4 hidden">
+                    <i data-feather="file" class="inline mr-2"></i>
+                    <span id="fileName">example.xlsx</span>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelUpload" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                        Cancel
+                    </button>
+                    <button id="confirmUpload" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all disabled:opacity-50" disabled>
+                        Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Country Modal -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">Edit Country Risk</h3>
+                    <button id="closeEditModal" class="text-gray-400 hover:text-gray-600">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <input type="text" id="editCountryName" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                        <input type="text" id="editCountryCode" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                        <input type="text" id="editCountryRegion" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Risk Level</label>
+                        <select id="editCountryRisk" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Very High">Very High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancelEdit" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all">
+                        Cancel
+                    </button>
+                    <button id="saveEdit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Country Details Sidebar -->
+    <div id="detailsSidebar" class="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-800">Country Details</h3>
+                <button id="closeSidebar" class="text-gray-400 hover:text-gray-600">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <div class="flex items-center mb-6">
+                <div class="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center mr-4 overflow-hidden" id="countryFlag">
+                    <i data-feather="flag" class="w-8 h-8 text-gray-400"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800" id="detailCountryName">-</h2>
+                    <p class="text-gray-600" id="detailCountryCode">-</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-500 mb-1">Region</p>
+                    <p class="font-medium" id="detailCountryRegion">-</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-500 mb-1">Risk Level</p>
+                    <p class="font-medium" id="detailCountryRisk">-</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-500 mb-1">Last Update</p>
+                    <p class="font-medium" id="detailLastUpdate">-</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <p class="text-sm text-gray-500 mb-1">Updated By</p>
+                    <p class="font-medium" id="detailUpdatedBy">-</p>
+                </div>
+            </div>
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Risk History</h4>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <canvas id="riskChart" height="150"></canvas>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 pt-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-3">Notes</h4>
+                <textarea id="countryNotes" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary focus:border-primary transition-all h-24" placeholder="Add notes about this country..."></textarea>
+                <button class="mt-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-all float-right">
+                    Save Notes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data - in a real app this would come from an API
+        const countries = [
+            { name: "Germany", code: "DE", region: "Europe", risk: "Low", lastUpdate: "2023-05-15", updatedBy: "admin@example.com" },
+            { name: "United States", code: "US", region: "Americas", risk: "Medium", lastUpdate: "2023-06-20", updatedBy: "analyst@example.com" },
+            { name: "Japan", code: "JP", region: "Asia", risk: "Low", lastUpdate: "2023-04-10", updatedBy: "admin@example.com" },
+            { name: "Brazil", code: "BR", region: "Americas", risk: "High", lastUpdate: "2023-07-05", updatedBy: "analyst@example.com" },
+            { name: "South Africa", code: "ZA", region: "Africa", risk: "Very High", lastUpdate: "2023-06-28", updatedBy: "admin@example.com" },
+            { name: "Australia", code: "AU", region: "Oceania", risk: "Low", lastUpdate: "2023-05-30", updatedBy: "analyst@example.com" },
+            { name: "India", code: "IN", region: "Asia", risk: "Medium", lastUpdate: "2023-07-12", updatedBy: "admin@example.com" },
+            { name: "France", code: "FR", region: "Europe", risk: "Low", lastUpdate: "2023-06-15", updatedBy: "analyst@example.com" },
+            { name: "Mexico", code: "MX", region: "Americas", risk: "High", lastUpdate: "2023-07-01", updatedBy: "admin@example.com" },
+            { name: "Nigeria", code: "NG", region: "Africa", risk: "Very High", lastUpdate: "2023-06-22", updatedBy: "analyst@example.com" }
+        ];
+
+        // Current page state
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let filteredCountries = [...countries];
+        let selectedCountry = null;
+
+        // DOM elements
+        const countryTable = document.getElementById('countryTable');
+        const searchInput = document.getElementById('searchInput');
+        const riskFilter = document.getElementById('riskFilter');
+        const regionFilter = document.getElementById('regionFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        const uploadModal = document.getElementById('uploadModal');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const closeUploadModal = document.getElementById('closeUploadModal');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileBtn = document.getElementById('selectFileBtn');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileName = document.getElementById('fileName');
+        const confirmUpload = document.getElementById('confirmUpload');
+        const cancelUpload = document.getElementById('cancelUpload');
+        const editModal = document.getElementById('editModal');
+        const closeEditModal = document.getElementById('closeEditModal');
+        const cancelEdit = document.getElementById('cancelEdit');
+        const saveEdit = document.getElementById('saveEdit');
+        const detailsSidebar = document.getElementById('detailsSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+        const shownCount = document.getElementById('shownCount');
+        const totalCount = document.getElementById('totalCount');
+        const totalCountries = document.getElementById('totalCountries');
+
+        // Initialize the app
+        function init() {
+            feather.replace();
+            renderCountryTable();
+            setupEventListeners();
+        }
+
+        // Render the country table
+        function renderCountryTable() {
+            countryTable.innerHTML = '';
+            
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredCountries.length);
+            const paginatedCountries = filteredCountries.slice(startIndex, endIndex);
+            
+            // Update pagination info
+            shownCount.textContent = startIndex + 1;
+            totalCount.textContent = endIndex;
+            totalCountries.textContent = filteredCountries.length;
+            prevPage.disabled = currentPage === 1;
+            nextPage.disabled = endIndex >= filteredCountries.length;
+            
+            // Render rows
+            paginatedCountries.forEach(country => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition-all cursor-pointer';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                <i data-feather="flag" class="text-gray-500"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${country.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${country.code}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${country.region}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRiskClass(country.risk)}">
+                            ${country.risk}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${formatDate(country.lastUpdate)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="edit-btn text-primary hover:text-opacity-70 mr-3" data-id="${country.code}">
+                            <i data-feather="edit" class="w-4 h-4"></i>
+                        </button>
+                        <button class="view-btn text-gray-600 hover:text-gray-900" data-id="${country.code}">
+                            <i data-feather="eye" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                countryTable.appendChild(row);
+                
+                // Add event listeners to the buttons we just created
+                row.querySelector('.edit-btn').addEventListener('click', () => openEditModal(country));
+                row.querySelector('.view-btn').addEventListener('click', () => openDetailsSidebar(country));
+            });
+            
+            feather.replace();
+        }
+
+        // Get risk level CSS class
+        function getRiskClass(risk) {
+            switch(risk) {
+                case 'Low': return 'risk-low text-white';
+                case 'Medium': return 'risk-medium text-white';
+                case 'High': return 'risk-high text-white';
+                case 'Very High': return 'risk-veryhigh text-white';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // Filter countries based on search and filters
+        function filterCountries() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const riskValue = riskFilter.value;
+            const regionValue = regionFilter.value;
+            const sortValue = sortFilter.value;
+            
+            filteredCountries = countries.filter(country => {
+                const matchesSearch = country.name.toLowerCase().includes(searchTerm) || 
+                                     country.code.toLowerCase().includes(searchTerm);
+                const matchesRisk = !riskValue || country.risk === riskValue;
+                const matchesRegion = !regionValue || country.region === regionValue;
+                
+                return matchesSearch && matchesRisk && matchesRegion;
+            });
+            
+            // Sort
+            if (sortValue === 'name') {
+                filteredCountries.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortValue === 'risk') {
+                const riskOrder = { 'Very High': 0, 'High': 1, 'Medium': 2, 'Low': 3 };
+                filteredCountries.sort((a, b) => riskOrder[a.risk] - riskOrder[b.risk] || a.name.localeCompare(b.name));
+            }
+            
+            currentPage = 1;
+            renderCountryTable();
+        }
+
+        // Open edit modal
+        function openEditModal(country) {
+            selectedCountry = country;
+            document.getElementById('editCountryName').value = country.name;
+            document.getElementById('editCountryCode').value = country.code;
+            document.getElementById('editCountryRegion').value = country.region;
+            document.getElementById('editCountryRisk').value = country.risk;
+            editModal.classList.remove('hidden');
+        }
+
+        // Open details sidebar
+        function openDetailsSidebar(country) {
+            selectedCountry = country;
+            document.getElementById('detailCountryName').textContent = country.name;
+            document.getElementById('detailCountryCode').textContent = country.code;
+            document.getElementById('detailCountryRegion').textContent = country.region;
+            document.getElementById('detailCountryRisk').textContent = country.risk;
+            document.getElementById('detailLastUpdate').textContent = formatDate(country.lastUpdate);
+            document.getElementById('detailUpdatedBy').textContent = country.updatedBy;
+            
+            // For demo purposes, we'll generate random historical data
+            const riskValues = ['Low', 'Medium', 'High', 'Very High'];
+            const historyData = Array.from({ length: 6 }, (_, i) => {
+                const date = new Date();
+                date.setMonth(date.getMonth() - (5 - i));
+                return {
+                    date: date.toISOString().split('T')[0],
+                    risk: riskValues[Math.floor(Math.random() * riskValues.length)]
+                };
+            });
+            
+            // Add current risk to the end
+            historyData.push({
+                date: country.lastUpdate,
+                risk: country.risk
+            });
+            
+            // Render chart
+            renderRiskChart(historyData);
+            
+            // Show sidebar
+            detailsSidebar.classList.remove('translate-x-full');
+        }
+
+        // Render risk history chart
+        function renderRiskChart(historyData) {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            
+            // Destroy previous chart if exists
+            if (window.riskChart) {
+                window.riskChart.destroy();
+            }
+            
+            const riskOrder = { 'Low': 0, 'Medium': 1, 'High': 2, 'Very High': 3 };
+            const riskColors = {
+                'Low': '#10b981',
+                'Medium': '#f59e0b',
+                'High': '#f97316',
+                'Very High': '#ef4444'
+            };
+            
+            window.riskChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historyData.map(d => formatDate(d.date)),
+                    datasets: [{
+                        label: 'Risk Level',
+                        data: historyData.map(d => riskOrder[d.risk]),
+                        borderColor: '#6D28D9',
+                        backgroundColor: 'rgba(109, 40, 217, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: historyData.map(d => riskColors[d.risk]),
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -0.5,
+                            max: 3.5,
+                            ticks: {
+                                callback: value => {
+                                    const risks = ['Low', 'Medium', 'High', 'Very High'];
+                                    return risks[value] || '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: context => {
+                                    const risks = ['Low', 'Medium', 'High', 'Very High'];
+                                    return risks[context.raw];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Search and filter inputs
+            searchInput.addEventListener('input', filterCountries);
+            riskFilter.addEventListener('change', filterCountries);
+            regionFilter.addEventListener('change', filterCountries);
+            sortFilter.addEventListener('change', filterCountries);
+            
+            // Upload modal
+            uploadBtn.addEventListener('click', () => uploadModal.classList.remove('hidden'));
+            closeUploadModal.addEventListener('click', () => uploadModal.classList.add('hidden'));
+            cancelUpload.addEventListener('click', () => uploadModal.classList.add('hidden'));
+            
+            // File handling
+            selectFileBtn.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            // Confirm upload
+            confirmUpload.addEventListener('click', uploadFile);
+            
+            // Edit modal
+            closeEditModal.addEventListener('click', () => editModal.classList.add('hidden'));
+            cancelEdit.addEventListener('click', () => editModal.classList.add('hidden'));
+            saveEdit.addEventListener('click', saveCountryChanges);
+            
+            // Details sidebar
+            closeSidebar.addEventListener('click', () => detailsSidebar.classList.add('translate-x-full'));
+            
+            // Pagination
+            prevPage.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderCountryTable();
+                }
+            });
+            
+            nextPage.addEventListener('click', () => {
+                const maxPage = Math.ceil(filteredCountries.length / itemsPerPage);
+                if (currentPage < maxPage) {
+                    currentPage++;
+                    renderCountryTable();
+                }
+            });
+        }
+
+        // Prevent default drag and drop behavior
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop zone
+        function highlight() {
+            dropZone.classList.add('border-primary', 'bg-gray-50');
+        }
+
+        // Unhighlight drop zone
+        function unhighlight() {
+            dropZone.classList.remove('border-primary', 'bg-gray-50');
+        }
+
+        // Handle dropped files
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        // Handle selected files
+        function handleFileSelect() {
+            handleFiles(this.files);
+        }
+
+        // Handle files (from drag and drop or file input)
+        function handleFiles(files) {
+            if (files.length) {
+                const file = files[0];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    fileName.textContent = file.name;
+                    fileNameDisplay.classList.remove('hidden');
+                    confirmUpload.disabled = false;
+                    fileInput.files = files; // Update the file input
+                } else {
+                    alert('Please select an Excel file (.xlsx or .xls)');
+                }
+            }
+        }
+
+        // Upload file (simulated)
+        function uploadFile() {
+            if (!fileInput.files.length) return;
+            
+            // Simulate API call
+            confirmUpload.disabled = true;
+            confirmUpload.innerHTML = '<i data-feather="loader" class="animate-spin w-4 h-4 mr-2"></i> Uploading...';
+            
+            setTimeout(() => {
+                // In a real app, this would be an actual API call
+                console.log('Uploading file to /api/countries/upload');
+                
+                // Simulate success
+                uploadModal.classList.add('hidden');
+                confirmUpload.innerHTML = 'Upload';
+                confirmUpload.disabled = false;
+                fileNameDisplay.classList.add('hidden');
+                fileInput.value = '';
+                
+                // Show success message (would be a toast in a real app)
+                alert('File uploaded successfully! Data will be processed shortly.');
+            }, 2000);
+        }
+
+        // Save country changes
+        function saveCountryChanges() {
+            if (!selectedCountry) return;
+            
+            const newRisk = document.getElementById('editCountryRisk').value;
+            selectedCountry.risk = newRisk;
+            selectedCountry.lastUpdate = new Date().toISOString().split('T')[0];
+            selectedCountry.updatedBy = 'currentuser@example.com';
+            
+            editModal.classList.add('hidden');
+            filterCountries();
+            
+            // Show success message (would be a toast in a real app)
+            alert('Country risk level updated successfully!');
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
