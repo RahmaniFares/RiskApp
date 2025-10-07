@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Monitoring Pipeline</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #f5f3ff, #ffffff);
+        }
+        .pipeline-line {
+            height: 4px;
+            background: linear-gradient(90deg, #6D28D9, #C084FC);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 0;
+            animation: pulseLine 2s infinite;
+        }
+        @keyframes pulseLine {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .card-hover:hover {
+            box-shadow: 0 10px 25px -5px rgba(109, 40, 217, 0.2);
+            transform: translateY(-5px);
+        }
+        .status-badge {
+            transition: all 0.3s ease;
+        }
+        .log-entry {
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800">
+    <!-- Header -->
+    <header class="py-6 px-6 border-b border-gray-200 bg-white">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-purple-800">Client Monitoring Pipeline</h1>
+            <div class="flex space-x-3">
+                <button id="startBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md">
+                    Start Monitoring
+                </button>
+                <button id="pauseResumeBtn" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md">
+                    Pause
+                </button>
+                <button id="retryBtn" class="hidden bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg font-medium transition-all shadow-md">
+                    Retry Failed Step
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        <!-- Pipeline Visualization -->
+        <section class="mb-16 relative" data-aos="fade-up">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                <!-- Step 1: Data Refresh -->
+                <div id="step1" class="card-hover bg-white bg-opacity-80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100 transition-all duration-300"
+                     data-aos="zoom-in" data-aos-delay="100">
+                    <div class="flex items-start mb-4">
+                        <div class="mr-4 text-purple-600">
+                            <i data-feather="refresh-cw" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Data Refresh</h3>
+                            <p class="text-sm text-gray-500">Fetch latest client data</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <span id="status1" class="status-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-gray-400"></span>
+                            Pending
+                        </span>
+                    </div>
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress1" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <button class="text-purple-600 text-sm font-medium flex items-center">
+                        View Logs <i data-feather="chevron-down" class="ml-1 w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Step 2: Daily Risk Calculation -->
+                <div id="step2" class="card-hover bg-white bg-opacity-80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100 transition-all duration-300"
+                     data-aos="zoom-in" data-aos-delay="200">
+                    <div class="flex items-start mb-4">
+                        <div class="mr-4 text-purple-600">
+                            <i data-feather="settings" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Risk Calculation</h3>
+                            <p class="text-sm text-gray-500">Batch processing jobs</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <span id="status2" class="status-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-gray-400"></span>
+                            Pending
+                        </span>
+                    </div>
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress2" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <button class="text-purple-600 text-sm font-medium flex items-center">
+                        View Logs <i data-feather="chevron-down" class="ml-1 w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Step 3: Export Results -->
+                <div id="step3" class="card-hover bg-white bg-opacity-80 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-gray-100 transition-all duration-300"
+                     data-aos="zoom-in" data-aos-delay="300">
+                    <div class="flex items-start mb-4">
+                        <div class="mr-4 text-purple-600">
+                            <i data-feather="upload" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-lg">Export Results</h3>
+                            <p class="text-sm text-gray-500">Send data to external systems</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <span id="status3" class="status-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            <span class="w-2 h-2 mr-2 rounded-full bg-gray-400"></span>
+                            Pending
+                        </span>
+                    </div>
+                    <div class="mb-4">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress3" class="bg-purple-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <button class="text-purple-600 text-sm font-medium flex items-center">
+                        View Logs <i data-feather="chevron-down" class="ml-1 w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Animated Pipeline Lines -->
+            <div class="absolute inset-0 hidden md:block pointer-events-none">
+                <div class="pipeline-line w-1/3 left-0"></div>
+                <div class="pipeline-line w-1/3 left-1/3"></div>
+            </div>
+        </section>
+
+        <!-- Execution Summary -->
+        <section class="mb-12" data-aos="fade-up">
+            <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 text-purple-800">Execution Summary</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="border-l-4 border-purple-500 pl-4 py-2">
+                        <p class="text-sm text-gray-500">Last Run</p>
+                        <p id="lastRun" class="font-medium">Never</p>
+                    </div>
+                    <div class="border-l-4 border-purple-500 pl-4 py-2">
+                        <p class="text-sm text-gray-500">Duration</p>
+                        <p id="duration" class="font-medium">0s</p>
+                    </div>
+                    <div class="border-l-4 border-purple-500 pl-4 py-2">
+                        <p class="text-sm text-gray-500">Completed Steps</p>
+                        <p id="completedSteps" class="font-medium">0/3</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Logs Console -->
+        <section data-aos="fade-up">
+            <div class="bg-gray-900 rounded-xl shadow-lg overflow-hidden">
+                <div class="px-4 py-3 bg-gray-800 border-b border-gray-700">
+                    <h2 class="text-lg font-semibold text-gray-100">Live Logs</h2>
+                </div>
+                <div id="logsContainer" class="h-64 overflow-y-auto p-4 font-mono text-sm text-green-400">
+                    <p class="log-entry">> System ready. Click "Start Monitoring" to begin.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        AOS.init();
+        feather.replace();
+
+        // DOM Elements
+        const startBtn = document.getElementById('startBtn');
+        const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+        const retryBtn = document.getElementById('retryBtn');
+        const logsContainer = document.getElementById('logsContainer');
+        const lastRunEl = document.getElementById('lastRun');
+        const durationEl = document.getElementById('duration');
+        const completedStepsEl = document.getElementById('completedSteps');
+
+        // State Management
+        let isRunning = false;
+        let isPaused = false;
+        let startTime;
+        let elapsedTime = 0;
+        let currentStep = 0;
+        let stepTimers = [];
+        const stepNames = ['Data Refresh', 'Risk Calculation', 'Export Results'];
+
+        // Utility Functions
+        function addLog(message) {
+            const logEntry = document.createElement('p');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `> ${message}`;
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function updateStatus(step, status, progress = 0) {
+            const statusEl = document.getElementById(`status${step}`);
+            const progressEl = document.getElementById(`progress${step}`);
+            
+            // Update status text and color
+            statusEl.innerHTML = '';
+            let statusText, bgColor, dotColor;
+            
+            switch(status) {
+                case 'running':
+                    statusText = 'Running';
+                    bgColor = 'bg-yellow-100';
+                    dotColor = 'bg-yellow-500';
+                    break;
+                case 'completed':
+                    statusText = 'Completed';
+                    bgColor = 'bg-green-100';
+                    dotColor = 'bg-green-500';
+                    break;
+                case 'failed':
+                    statusText = 'Failed';
+                    bgColor = 'bg-red-100';
+                    dotColor = 'bg-red-500';
+                    break;
+                default: // pending
+                    statusText = 'Pending';
+                    bgColor = 'bg-gray-100';
+                    dotColor = 'bg-gray-400';
+            }
+            
+            statusEl.className = `status-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${bgColor} text-gray-800`;
+            statusEl.innerHTML = `<span class="w-2 h-2 mr-2 rounded-full ${dotColor}"></span>${statusText}`;
+            
+            // Update progress
+            progressEl.style.width = `${progress}%`;
+            
+            // Add animation for running state
+            if (status === 'running') {
+                progressEl.classList.add('animate-pulse');
+            } else {
+                progressEl.classList.remove('animate-pulse');
+            }
+        }
+
+        function resetPipeline() {
+            for (let i = 1; i <= 3; i++) {
+                updateStatus(i, 'pending', 0);
+            }
+            currentStep = 0;
+            completedStepsEl.textContent = '0/3';
+        }
+
+        function runStep(step) {
+            if (isPaused) return;
+            
+            currentStep = step;
+            const stepName = stepNames[step-1];
+            
+            // Update UI
+            updateStatus(step, 'running', 0);
+            addLog(`${stepName} started...`);
+            
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                if (isPaused) return;
+                
+                progress += Math.random() * 10;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    
+                    // Simulate completion or failure
+                    const isSuccess = Math.random() > 0.2; // 80% success rate
+                    
+                    if (isSuccess) {
+                        updateStatus(step, 'completed', 100);
+                        addLog(`${stepName} completed successfully.`);
+                        
+                        // Update summary
+                        const completed = parseInt(completedStepsEl.textContent.split('/')[0]) + 1;
+                        completedStepsEl.textContent = `${completed}/3`;
+                        
+                        // Move to next step or finish
+                        if (step < 3) {
+                            setTimeout(() => runStep(step + 1), 1000);
+                        } else {
+                            // All steps completed
+                            isRunning = false;
+                            startBtn.classList.remove('hidden');
+                            pauseResumeBtn.classList.add('hidden');
+                            addLog("Pipeline execution completed.");
+                            
+                            // Update duration
+                            const endTime = new Date();
+                            const duration = ((endTime - startTime) / 1000).toFixed(1);
+                            durationEl.textContent = `${duration}s`;
+                        }
+                    } else {
+                        updateStatus(step, 'failed', 0);
+                        addLog(`${stepName} failed!`);
+                        isRunning = false;
+                        startBtn.classList.add('hidden');
+                        pauseResumeBtn.classList.add('hidden');
+                        retryBtn.classList.remove('hidden');
+                    }
+                } else {
+                    updateStatus(step, 'running', progress);
+                }
+            }, 200);
+            
+            stepTimers.push(interval);
+        }
+
+        function startPipeline() {
+            if (isRunning) return;
+            
+            // Reset state
+            resetPipeline();
+            isRunning = true;
+            isPaused = false;
+            startTime = new Date();
+            lastRunEl.textContent = startTime.toLocaleTimeString();
+            durationEl.textContent = '0s';
+            
+            // Show controls
+            startBtn.classList.add('hidden');
+            pauseResumeBtn.classList.remove('hidden');
+            retryBtn.classList.add('hidden');
+            pauseResumeBtn.textContent = 'Pause';
+            
+            // Start first step
+            addLog("Starting pipeline execution...");
+            runStep(1);
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            pauseResumeBtn.textContent = isPaused ? 'Resume' : 'Pause';
+            
+            if (!isPaused && currentStep > 0) {
+                addLog(`Resumed ${stepNames[currentStep-1]}...`);
+            }
+        }
+
+        function retryFailedStep() {
+            if (currentStep === 0) return;
+            
+            resetPipeline();
+            isRunning = true;
+            isPaused = false;
+            
+            startBtn.classList.add('hidden');
+            pauseResumeBtn.classList.remove('hidden');
+            retryBtn.classList.add('hidden');
+            pauseResumeBtn.textContent = 'Pause';
+            
+            addLog(`Retrying ${stepNames[currentStep-1]}...`);
+            runStep(currentStep);
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', startPipeline);
+        pauseResumeBtn.addEventListener('click', togglePause);
+        retryBtn.addEventListener('click', retryFailedStep);
+
+        // Initialize
+        resetPipeline();
+    </script>
+</body>
+</html>
