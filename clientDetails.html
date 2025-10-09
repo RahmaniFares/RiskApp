@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client File - Risk Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB;
+        }
+        .risk-low {
+            background-color: #10B981;
+        }
+        .risk-medium {
+            background-color: #F59E0B;
+        }
+        .risk-high {
+            background-color: #EF4444;
+        }
+        .risk-very-high {
+            background-color: #6D28D9;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-content.open {
+            max-height: 500px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+            <div>
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                        <li class="inline-flex items-center">
+                            <a href="#" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-purple-700">
+                                <i class="fas fa-home mr-2"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <div class="flex items-center">
+                                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                                <a href="#" class="ml-1 text-sm font-medium text-gray-500 hover:text-purple-700 md:ml-2">Clients</a>
+                            </div>
+                        </li>
+                        <li aria-current="page">
+                            <div class="flex items-center">
+                                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                                <span class="ml-1 text-sm font-medium text-purple-700 md:ml-2">John Smith</span>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <h1 class="text-2xl font-bold text-gray-800">Client File — <span class="text-purple-700">John Smith</span></h1>
+            </div>
+            <div class="flex space-x-3 mt-4 md:mt-0">
+                <button onclick="recalculateRisk('12345')" class="flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-calculator mr-2"></i> Recalculate Risk
+                </button>
+                <button onclick="viewHistory()" class="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-history mr-2"></i> View Risk History
+                </button>
+                <button onclick="openEditModal()" class="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-pencil-alt mr-2"></i> Edit Client Info
+                </button>
+            </div>
+        </div>
+
+        <!-- Client Overview Card -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row">
+                <div class="flex items-center md:w-1/2 mb-6 md:mb-0">
+                    <div class="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mr-6">
+                        <i class="fas fa-user text-purple-700 text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">John Smith</h2>
+                        <p class="text-gray-600">Client ID: CL-2023-0456</p>
+                        <p class="text-gray-600">Individual Client</p>
+                        <div class="flex mt-2 space-x-2">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Verified</span>
+                            <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">PEP</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex flex-col justify-center items-start md:items-end">
+                    <div class="flex items-center mb-4">
+                        <span class="text-lg font-medium text-gray-700 mr-3">Global Risk:</span>
+                        <span class="px-3 py-1 rounded-full text-white risk-high font-semibold">High Risk</span>
+                    </div>
+                    <div class="w-full md:w-3/4">
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">Risk Score: 78/100</span>
+                            <span class="text-sm text-gray-500">Last calculated: 15 Jun 2023</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-purple-600 h-2.5 rounded-full" style="width: 78%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risk Factor Summary Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-purple-600">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-full mr-3">
+                        <i class="fas fa-globe text-purple-700"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Nationality</p>
+                        <p class="font-medium">United Kingdom <span class="text-xs">🇬🇧</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-purple-600">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-full mr-3">
+                        <i class="fas fa-map-marker-alt text-purple-700"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Country of Residence</p>
+                        <p class="font-medium">France <span class="text-xs">🇫🇷</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-purple-600">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-full mr-3">
+                        <i class="fas fa-briefcase text-purple-700"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Sector of Activity</p>
+                        <p class="font-medium">Financial Services</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
+                <div class="flex items-center">
+                    <div class="p-2 bg-gray-200 rounded-full mr-3">
+                        <i class="fas fa-user-shield text-gray-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Is PEP?</p>
+                        <p class="font-medium text-red-600">Yes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
+                <div class="flex items-center">
+                    <div class="p-2 bg-gray-200 rounded-full mr-3">
+                        <i class="fas fa-newspaper text-gray-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Adverse Media</p>
+                        <p class="font-medium text-green-600">None</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
+                <div class="flex items-center">
+                    <div class="p-2 bg-gray-200 rounded-full mr-3">
+                        <i class="fas fa-network-wired text-gray-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Distribution Channel</p>
+                        <p class="font-medium text-green-600">Active</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Section -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px space-x-8">
+                    <button onclick="toggleTab('client-tab')" class="tab-button py-4 px-1 border-b-2 font-medium text-sm active border-purple-600 text-purple-600">
+                        <i class="fas fa-user mr-2"></i> Client
+                    </button>
+                    <button onclick="toggleTab('rl-tab')" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-balance-scale mr-2"></i> Legal Representatives
+                    </button>
+                    <button onclick="toggleTab('ubo-tab')" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-users mr-2"></i> Beneficial Owners
+                    </button>
+                    <button onclick="toggleTab('history-tab')" class="tab-button py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-chart-line mr-2"></i> Risk History
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Client Tab Content -->
+            <div id="client-tab" class="tab-content active py-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Identity Information</h3>
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">First Name</p>
+                                    <p class="font-medium">John</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Last Name</p>
+                                    <p class="font-medium">Smith</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Date of Birth</p>
+                                    <p class="font-medium">15/03/1978</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Gender</p>
+                                    <p class="font-medium">Male</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Place of Birth</p>
+                                    <p class="font-medium">London, UK</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">National ID</p>
+                                    <p class="font-medium">UK-789456123</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+                        <div class="bg-white rounded-lg shadow-sm p-6">
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Email</p>
+                                    <p class="font-medium">john.smith@example.com</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Phone</p>
+                                    <p class="font-medium">+33 6 12 34 56 78</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Address</p>
+                                    <p class="font-medium">15 Rue de Rivoli, 75004 Paris, France</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Detailed Risk Factors</h3>
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factor</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Impact</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PEP Status</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes (Former Minister)</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">+35 points</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Country of Residence</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">France</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium">+10 points</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Sector of Activity</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Financial Services</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 font-medium">+15 points</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Transaction Volume</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">€250,000/month</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">+5 points</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Customer Since</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 years</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">-5 points</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Risk Evolution</h3>
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="h-64">
+                            <!-- Placeholder for chart -->
+                            <div class="flex items-center justify-center h-full bg-gray-100 rounded-lg">
+                                <p class="text-gray-500">Risk score evolution chart will be displayed here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal Representatives Tab Content -->
+            <div id="rl-tab" class="tab-content py-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800">Legal Representatives (2)</h3>
+                    <button class="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i> Add Legal Representative
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- RL Card 1 -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                                        <i class="fas fa-user-tie text-purple-700"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">Marie Dubois</h4>
+                                        <p class="text-sm text-gray-600">Director, French Nationality</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="px-3 py-1 rounded-full text-white risk-medium font-semibold">Medium Risk</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Last updated: 10 Jun 2023</span>
+                            <button onclick="toggleAccordion('rl1-details')" class="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center">
+                                <span>View Details</span>
+                                <i class="fas fa-chevron-down ml-2 transition-transform" id="rl1-chevron"></i>
+                            </button>
+                        </div>
+                        <div id="rl1-details" class="accordion-content">
+                            <div class="p-6 border-t border-gray-200">
+                                <h5 class="font-medium text-gray-800 mb-3">Risk Factors</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">PEP Status</p>
+                                        <p class="font-medium">No</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">Country of Residence</p>
+                                        <p class="font-medium">France</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">Adverse Media</p>
+                                        <p class="font-medium text-green-600">None</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">Political Connections</p>
+                                        <p class="font-medium">None known</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <h5 class="font-medium text-gray-800 mb-3">Contact Information</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Email</p>
+                                            <p class="font-medium">marie.dubois@company.com</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Phone</p>
+                                            <p class="font-medium">+33 6 98 76 54 32</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RL Card 2 -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                                        <i class="fas fa-user-tie text-purple-700"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">Thomas Müller</h4>
+                                        <p class="text-sm text-gray-600">CFO, German Nationality</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="px-3 py-1 rounded-full text-white risk-low font-semibold">Low Risk</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Last updated: 05 May 2023</span>
+                            <button onclick="toggleAccordion('rl2-details')" class="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center">
+                                <span>View Details</span>
+                                <i class="fas fa-chevron-down ml-2 transition-transform" id="rl2-chevron"></i>
+                            </button>
+                        </div>
+                        <div id="rl2-details" class="accordion-content">
+                            <div class="p-6 border-t border-gray-200">
+                                <h5 class="font-medium text-gray-800 mb-3">Risk Factors</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">PEP Status</p>
+                                        <p class="font-medium">No</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">Country of Residence</p>
+                                        <p class="font-medium">Germany</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">Adverse Media</p>
+                                        <p class="font-medium text-green-600">None</p>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded">
+                                        <p class="text-sm text-gray-500">Political Connections</p>
+                                        <p class="font-medium">None known</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <h5 class="font-medium text-gray-800 mb-3">Contact Information</h5>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Email</p>
+                                            <p class="font-medium">thomas.muller@company.com</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Phone</p>
+                                            <p class="font-medium">+49 172 345 6789</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beneficial Owners Tab Content -->
+            <div id="ubo-tab" class="tab-content py-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800">Beneficial Owners (3)</h3>
+                    <button class="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i> Add Beneficial Owner
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- UBO Card 1 -->
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mr-4">
+                                        <i class="fas fa-user text-purple-700"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-800">John Smith</h4>
+                                        <p class="text-sm text-gray-600">Ownership: 45% • UK Nationality</p>
+                                    </div>
+                                </div>
+
+</html>
